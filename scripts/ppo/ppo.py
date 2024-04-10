@@ -124,7 +124,7 @@ def run_ppo(cfg, task):
             voc_path,
             ckpt_path,
             tokenizer,
-        ) = models[cfg.model]
+        ) = models[cfg.model](cfg)
     else:
         raise ValueError(f"Unknown model type: {cfg.model}")
 
@@ -149,10 +149,13 @@ def run_ppo(cfg, task):
         critic_training, critic_inference = create_critic(len(vocabulary))
 
     # Load pretrained weights
-    ckpt = torch.load(ckpt_path)
+    ckpt_path = cfg.get("model_weights", ckpt_path)
+    ckpt = torch.load(ckpt_path, map_location=device)
+    
     actor_inference.load_state_dict(
         adapt_state_dict(ckpt, actor_inference.state_dict())
     )
+
     actor_training.load_state_dict(adapt_state_dict(ckpt, actor_training.state_dict()))
     actor_inference = actor_inference.to(device)
     actor_training = actor_training.to(device)
